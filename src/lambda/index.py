@@ -13,7 +13,6 @@ def on_create(event):
     hosted_zone_id = event['ResourceProperties']['HostedZoneId']
     certificate_flag = bool(event['ResourceProperties'].get('Certificate', False))
 
-    record_type = None
     record_name = None
     record_value = None
     record_ttl = None
@@ -22,7 +21,6 @@ def on_create(event):
     new_certificate = None
 
     if certificate_flag:
-        record_type = 'CNAME'
         domain_name = event['ResourceProperties']['DomainName']
         cert_name = event['ResourceProperties']['CertName']
         record_ttl = int(event['ResourceProperties']['RecordTTL'])
@@ -49,7 +47,6 @@ def on_create(event):
         print(record_value)
         print(record_name)
     else:
-        record_type = 'A'
         record_name = event['ResourceProperties']['RecordName']
         record_value = event['ResourceProperties']['RecordValue']
 
@@ -73,14 +70,14 @@ def on_create(event):
     if certificate_flag:
         record = {
                     'Name': record_name,
-                    'Type': record_type,
+                    'Type': 'CNAME',
                     'TTL': record_ttl,
                     'ResourceRecords': [{'Value': record_value}]
                 }
     else:
         record = {
                     'Name': record_name,
-                    'Type': record_type,
+                    'Type': 'A',
                     'AliasTarget': {
                         'HostedZoneId': 'Z3AADJGX6KTTL2',
                         'DNSName': record_value,
@@ -120,7 +117,6 @@ def on_update(event):
     hosted_zone_id = event['ResourceProperties']['HostedZoneId']
     certificate_flag = bool(event['ResourceProperties'].get('Certificate', False))
 
-    record_type = None
     record_name = None
     record_value = None
     record_ttl = None
@@ -129,7 +125,6 @@ def on_update(event):
     new_certificate = None
 
     if certificate_flag:
-        record_type = 'CNAME'
         domain_name = event['ResourceProperties']['DomainName']
         cert_name = event['ResourceProperties']['CertName']
         record_ttl = int(event['ResourceProperties']['RecordTTL'])
@@ -165,7 +160,6 @@ def on_update(event):
         print(record_value)
         print(record_name)
     else:
-        record_type = 'A'
         record_name = event['ResourceProperties']['RecordName']
         record_value = event['ResourceProperties']['RecordValue']
 
@@ -189,14 +183,14 @@ def on_update(event):
     if certificate_flag:
         record = {
                     'Name': record_name,
-                    'Type': record_type,
+                    'Type': 'CNAME',
                     'TTL': record_ttl,
                     'ResourceRecords': [{'Value': record_value}]
                 }
     else:
         record = {
                     'Name': record_name,
-                    'Type': record_type,
+                    'Type': 'A',
                     'AliasTarget': {
                         'HostedZoneId': 'Z3AADJGX6KTTL2',
                         'DNSName': record_value,
@@ -236,14 +230,12 @@ def on_delete(event):
     hosted_zone_id = event['ResourceProperties']['HostedZoneId']
     certificate_flag = bool(event['ResourceProperties'].get('Certificate', False))
 
-    record_type = None
     record_name = None
     record_value = None
     record_ttl = None
     cert_name = None
 
     if certificate_flag:
-        record_type = 'CNAME'
         cert_name = event['ResourceProperties']['CertName']
         record_ttl = int(event['ResourceProperties']['RecordTTL'])
         acm_client = boto3.client('acm')
@@ -263,7 +255,6 @@ def on_delete(event):
                 )
                 print(f'deleted certificate {certificate["DomainName"]}')
     else:
-        record_type = 'A'
         record_name = event['ResourceProperties']['RecordName']
         record_value = event['ResourceProperties']['RecordValue']
 
@@ -287,14 +278,14 @@ def on_delete(event):
     if certificate_flag:
         record = {
                     'Name': record_name,
-                    'Type': record_type,
+                    'Type': 'CNAME',
                     'TTL': record_ttl,
                     'ResourceRecords': [{'Value': record_value}]
                 }
     else:
         record = {
                     'Name': record_name,
-                    'Type': record_type,
+                    'Type': 'A',
                     'AliasTarget': {
                         'HostedZoneId': 'Z3AADJGX6KTTL2',
                         'DNSName': record_value,
