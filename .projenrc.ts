@@ -1,6 +1,6 @@
 import { awscdk } from 'projen';
 const project = new awscdk.AwsCdkTypeScriptApp({
-  cdkVersion: '2.1.0',
+  cdkVersion: '2.8.1',
   defaultReleaseBranch: 'main',
   name: 'cross-account-route53-records',
   projenrcTs: true,
