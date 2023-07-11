@@ -68,6 +68,8 @@ export class CrossAccountR53 extends Stack {
         RecordTTL: 300,
         DomainName: 'example.com',
         CertName: 'test.example.com',
+        Alias: true,
+        AwsHostedZoneId: 'Z3AADJGX6KTTL2',
       },
     });
   }

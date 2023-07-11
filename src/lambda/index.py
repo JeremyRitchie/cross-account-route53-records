@@ -12,6 +12,7 @@ def on_create(event):
     role_arn = event['ResourceProperties']['TargetAccountRole']
     hosted_zone_id = event['ResourceProperties']['HostedZoneId']
     certificate_flag = bool(event['ResourceProperties'].get('Certificate', False))
+    alias_flag = bool(event['ResourceProperties'].get('Alias', False))
 
     record_name = None
     record_value = None
@@ -19,6 +20,8 @@ def on_create(event):
     domain_name = None
     cert_name = None
     new_certificate = None
+    record_type = None
+    aws_hosted_zone_id = None
 
     if certificate_flag:
         domain_name = event['ResourceProperties']['DomainName']
@@ -46,9 +49,14 @@ def on_create(event):
         record_name = describe_certificate['Certificate']['DomainValidationOptions'][0]['ResourceRecord']['Name']
         print(record_value)
         print(record_name)
+    elif alias_flag:
+        aws_hosted_zone_id = event['ResourceProperties']['AwsHostedZoneId']
+        record_name = event['ResourceProperties']['RecordName']
+        record_value = event['ResourceProperties']['RecordValue']
     else:
         record_name = event['ResourceProperties']['RecordName']
         record_value = event['ResourceProperties']['RecordValue']
+        record_type = event['ResourceProperties']['RecordType']
 
     # Assume a role in the target account
     sts_client = boto3.client('sts')
@@ -74,15 +82,22 @@ def on_create(event):
                     'TTL': record_ttl,
                     'ResourceRecords': [{'Value': record_value}]
                 }
-    else:
+
+    elif alias_flag:
         record = {
                     'Name': record_name,
                     'Type': 'A',
                     'AliasTarget': {
-                        'HostedZoneId': 'Z3AADJGX6KTTL2',
+                        'HostedZoneId': aws_hosted_zone_id,
                         'DNSName': record_value,
                         'EvaluateTargetHealth': False
                     }
+                }
+    else:
+        record = {
+                    'Name': record_name,
+                    'Type': record_type,
+                    'ResourceRecords': [{'Value': record_value}]
                 }
 
     print(record)
@@ -116,6 +131,7 @@ def on_update(event):
     role_arn = event['ResourceProperties']['TargetAccountRole']
     hosted_zone_id = event['ResourceProperties']['HostedZoneId']
     certificate_flag = bool(event['ResourceProperties'].get('Certificate', False))
+    alias_flag = bool(event['ResourceProperties'].get('Alias', False))
 
     record_name = None
     record_value = None
@@ -123,45 +139,28 @@ def on_update(event):
     domain_name = None
     cert_name = None
     new_certificate = None
+    record_type = None
+    aws_hosted_zone_id = None
 
     if certificate_flag:
-        domain_name = event['ResourceProperties']['DomainName']
-        cert_name = event['ResourceProperties']['CertName']
-        record_ttl = int(event['ResourceProperties']['RecordTTL'])
         acm_client = boto3.client('acm')
         list_certifcates = acm_client.list_certificates()
         for certificate in list_certifcates['CertificateSummaryList']:
             if certificate['DomainName'] == cert_name:
-                print(f'deleting certificate {certificate["CertificateArn"]}')
-                record_name = certificate['DomainValidationOptions'][0]['ResourceRecord']['Name']
-                acm_client.delete_certificate(
-                    CertificateArn=certificate['CertificateArn']
-                )
-                print(f'deleted certificate {certificate["DomainName"]}')
-        time.sleep(10)
-        new_certificate = acm_client.request_certificate(
-            DomainName=cert_name,
-            ValidationMethod='DNS',
-            DomainValidationOptions=[
-                {
-                    'DomainName': cert_name,
-                    'ValidationDomain': domain_name
-                },
-            ],
-        )
-        print(new_certificate)
-        time.sleep(10)
-        describe_certificate = acm_client.describe_certificate(
-            CertificateArn=new_certificate['CertificateArn']
-        )
-        print(describe_certificate)
-        record_value = describe_certificate['Certificate']['DomainValidationOptions'][0]['ResourceRecord']['Value']
-        record_name = describe_certificate['Certificate']['DomainValidationOptions'][0]['ResourceRecord']['Name']
-        print(record_value)
-        print(record_name)
+                return {
+                    'PhysicalResourceId': record_name.replace(".", ""),
+                    'Data': {
+                        'CertificateArn': certificate['CertificateArn']
+                    }
+                }
+    elif alias_flag:
+        aws_hosted_zone_id = event['ResourceProperties']['AwsHostedZoneId']
+        record_name = event['ResourceProperties']['RecordName']
+        record_value = event['ResourceProperties']['RecordValue']
     else:
         record_name = event['ResourceProperties']['RecordName']
         record_value = event['ResourceProperties']['RecordValue']
+        record_type = event['ResourceProperties']['RecordType']
 
     # Assume a role in the target account
     sts_client = boto3.client('sts')
@@ -187,15 +186,21 @@ def on_update(event):
                     'TTL': record_ttl,
                     'ResourceRecords': [{'Value': record_value}]
                 }
-    else:
+    elif alias_flag:
         record = {
                     'Name': record_name,
                     'Type': 'A',
                     'AliasTarget': {
-                        'HostedZoneId': 'Z3AADJGX6KTTL2',
+                        'HostedZoneId': aws_hosted_zone_id,
                         'DNSName': record_value,
                         'EvaluateTargetHealth': False
                     }
+                }
+    else:
+        record = {
+                    'Name': record_name,
+                    'Type': record_type,
+                    'ResourceRecords': [{'Value': record_value}]
                 }
     print(record)
 
@@ -229,11 +234,16 @@ def on_delete(event):
     role_arn = event['ResourceProperties']['TargetAccountRole']
     hosted_zone_id = event['ResourceProperties']['HostedZoneId']
     certificate_flag = bool(event['ResourceProperties'].get('Certificate', False))
+    alias_flag = bool(event['ResourceProperties'].get('Alias', False))
 
     record_name = None
     record_value = None
     record_ttl = None
+    domain_name = None
     cert_name = None
+    new_certificate = None
+    record_type = None
+    aws_hosted_zone_id = None
 
     if certificate_flag:
         cert_name = event['ResourceProperties']['CertName']
@@ -254,9 +264,14 @@ def on_delete(event):
                     CertificateArn=certificate['CertificateArn']
                 )
                 print(f'deleted certificate {certificate["DomainName"]}')
+    elif alias_flag:
+        aws_hosted_zone_id = event['ResourceProperties']['AwsHostedZoneId']
+        record_name = event['ResourceProperties']['RecordName']
+        record_value = event['ResourceProperties']['RecordValue']
     else:
         record_name = event['ResourceProperties']['RecordName']
         record_value = event['ResourceProperties']['RecordValue']
+        record_type = event['ResourceProperties']['RecordType']
 
 
     # Assume a role in the target account
@@ -282,15 +297,22 @@ def on_delete(event):
                     'TTL': record_ttl,
                     'ResourceRecords': [{'Value': record_value}]
                 }
-    else:
+
+    elif alias_flag:
         record = {
                     'Name': record_name,
                     'Type': 'A',
                     'AliasTarget': {
-                        'HostedZoneId': 'Z3AADJGX6KTTL2',
+                        'HostedZoneId': aws_hosted_zone_id,
                         'DNSName': record_value,
                         'EvaluateTargetHealth': False
                     }
+                }
+    else:
+        record = {
+                    'Name': record_name,
+                    'Type': record_type,
+                    'ResourceRecords': [{'Value': record_value}]
                 }
     print(record)
 
@@ -307,6 +329,6 @@ def on_delete(event):
     print(f'record response: {response}')
 
     return {
-        'PhysicalResourceId': record_name.replace(".", "")
+        'PhysicalResourceId': event['PhysicalResourceId']
     }
 
