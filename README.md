@@ -9,7 +9,7 @@ Read more about this repo and how you can best use it here: https://jeremyritchi
 | Record type | Supported | Comments                                                                                                                                              |
 |-------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
 | A           | ✅         |                                                                                                                                                       |
-| Alias       | ✅         |                                                                                                                                                       |
+| Alias A      | ✅         |                                                                                                                                                       |
 | CNAME       | ✅         |                                                                                                                                                       |
 | TXT         | ❔         | Untested - High likely hood of support without any changes.                                                                                           |
 | NS          | ❌         | AWS already supports this - read more here: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_route53.CrossAccountZoneDelegationRecord.html |
