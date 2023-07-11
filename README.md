@@ -2,8 +2,17 @@
 
 This is repo is intended to be widely reused as a template for cross account certificate validation & Alias A record creation.
 
-
 Read more about this repo and how you can best use it here: https://jeremyritchie.com/posts/11/
+
+## Support
+
+| Record type | Supported | Comments                                                                                                                                              |
+|-------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| A           | ✅         |                                                                                                                                                       |
+| Alias       | ✅         |                                                                                                                                                       |
+| CNAME       | ✅         |                                                                                                                                                       |
+| TXT         | ❔         | Untested - High likely hood of support without any changes.                                                                                           |
+| NS          | ❌         | AWS already supports this - read more here: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_route53.CrossAccountZoneDelegationRecord.html |
 
 ## Prerequisites
 
